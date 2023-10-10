@@ -426,6 +426,11 @@ function _M:verify(pkey)
   end
 end
 
+
+-- openssl x509 -in youcert.crt -noout -text
+
+
+
 -- AUTO GENERATED
 local function get_extension(ctx, nid_txt, last_pos)
   last_pos = (last_pos or 0) - 1
@@ -461,10 +466,104 @@ end
 
 -- AUTO GENERATED
 function _M:get_extension(nid_txt, last_pos)
+
+  -- run code inside teh coantier
+  -- https://www.thegeekstuff.com/2009/12/lua-hello-world-example-how-to-write-and-execute-lua-program-on-linux-os/
+
+  -- https://github.com/fffonion/lua-resty-openssl#functions-for-stack-like-objects
+
   local ctx, pos, err = get_extension(self.ctx, nid_txt, last_pos)
   if err then
     return nil, nil, "x509:get_extension: " .. err
   end
+  -- here is where we can get the ext
+  -- OPTION 1
+
+  -- subalt = cert:get_extension("sub alt name")
+  -- cert509 = subalt.to_der()
+
+
+--------------------------------------------------------------------------------------------
+
+--   #define SN_subject_alt_name             "subjectAltName"
+-- #define LN_subject_alt_name             "X509v3 Subject Alternative Name"
+-- #define NID_subject_alt_name            85
+-- #define OBJ_subject_alt_name            OBJ_id_ce,17L
+
+-- https://github.com/openssl/openssl/blob/master/include/openssl/obj_mac.h#L2657C1-L2660C54
+
+--------------------------------------------------------------------------------------------
+
+
+-- OPTION 2
+
+-- https://github.com/fffonion/lua-resty-openssl/issues/24
+-- https://github.com/fffonion/lua-resty-openssl/pull/28/files
+
+-- local x509 = require("resty.openssl.x509")
+-- local c1 = assert(x509.new(io.open("buggy.crt"):read("*a")))
+
+-- local function to_hex(str)
+--     return (str:gsub('.', function (c)
+--         return string.format('%02X', string.byte(c))
+--     end))
+-- end
+
+-- print(to_hex(c1:get_extension("subjectKeyIdentifier"):to_der()))
+-- print(to_hex(c1:get_extension("authorityKeyIdentifier"):to_der()))
+
+
+-- local ext, pos, err = x509:get_extension("keyUsage")
+-- ngx.say(ext:text())
+-- -- outputs "Digital Signature, Key Encipherment"
+
+-- local ext, pos, err = x509:get_extension("subjectKeyIdentifier")
+-- ngx.say(ext:text())
+-- -- outputs "3D:42:13:57:8F:79:BE:30:7D:86:A9:AC:67:50:E5:56:3E:0E:AF:4F"
+
+
+--------------------------------------------------------------------------------------------------
+
+
+-- OPTION 3
+
+-- local name, err = require("resty.openssl.x509.name").new()
+-- local _, err = name:add("CN", "example.com")
+
+-- for k, obj in pairs(name) do
+--   ngx.say(k, ":", require("cjson").encode(obj))
+-- end
+-- -- outputs 'CN: {"sn":"CN","id":"2.5.4.3","nid":13,"blob":"3.example.com","ln":"commonName"}'
+
+--------------------------------------------------------------------------------------------------
+
+
+-- OPTION 4
+-- local cjson = require("cjosn")
+-- local x509 = require("resty.openssl.x509")
+-- local crt = x509.new(io.open("/path/to/a_cert_has_info_access.crt"):read("*a"))
+
+-- local aia = crt:get_info_access()
+
+-- ngx.say(cjson.encode(aia[1]))
+-- -- outputs '[178,"URI","http:\/\/ocsp.starfieldtech.com\/"]'
+
+-- for _, a in ipairs(aia) do
+--   ngx.say(cjson.encode(a))
+-- end 
+
+
+----------------------------------------------------------------------------------
+-- OPTION 5 
+-- https://github.com/fffonion/lua-resty-openssl#extensiontext
+-- local objects = require "resty.openssl.objects"
+-- ngx.say(cjson.encode(objects.obj2table(extension:get_object())))
+-- -- outputs '{"ln":"X509v3 Subject Key Identifier","nid":82,"sn":"subjectKeyIdentifier","id":"2.5.29.14"}'
+-- ngx.say(extension:text())
+-- -- outputs "C9:C2:53:61:66:9D:5F:AB:25:F4:26:CD:0F:38:9A:A8:49:EA:48:A9"
+
+
+
   local ext, err = extension_lib.dup(ctx)
   if err then
     return nil, nil, "x509:get_extension: " .. err

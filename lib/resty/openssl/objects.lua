@@ -20,6 +20,17 @@ local function obj2table(obj)
     sn = ffi_str(C.OBJ_nid2sn(nid)),
     ln = ffi_str(C.OBJ_nid2ln(nid)),
   }
+
+  -- https://github.com/fffonion/lua-resty-openssl#objectsobj2table
+
+  -- {
+  --   id: OID of the object,
+  --   nid: NID of the object,
+  --   sn: short name of the object,
+  --   ln: long name of the object,
+  -- }
+  
+
 end
 
 local function nid2table(nid)

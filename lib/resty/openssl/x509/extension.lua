@@ -183,6 +183,11 @@ function _M:to_der()
   local asn1 = C.X509_EXTENSION_get_data(self.ctx)
 
   return ffi_str(asn1_macro.ASN1_STRING_get0_data(asn1))
+
+
+  -- local asn1 = C.X509_EXTENSION_get_data(self.ctx)
+  -- return bio_util.read_wrap(C.ASN1_STRING_print, asn1)
+
 end
 
 function _M.from_data(any, txtnid, crit)
@@ -258,10 +263,10 @@ function _M:set_critical(crit)
 end
 
 function _M:tostring()
-  local ret, err = bio_util.read_wrap(C.X509V3_EXT_print, self.ctx, 0, 0)
-  if not err then
-    return ret
-  end
+  -- local ret, err = bio_util.read_wrap(C.X509V3_EXT_print, self.ctx, 0, 0)
+  -- if not err then
+  --   return ret
+  -- end
   -- fallback to ASN.1 print
   local asn1 = C.X509_EXTENSION_get_data(self.ctx)
   return bio_util.read_wrap(C.ASN1_STRING_print, asn1)
